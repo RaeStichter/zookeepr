@@ -10,11 +10,14 @@ const PORT = process.env.PORT || 3001;
 // instantiate the serve
 const app = express();
 
-// ----------------------------------------PARSE INCOMING DATA ----------------------------------------
+// ----------------------------------------MIDDLEWARE ----------------------------------------
 // parse incoming string or array data
 app.use(express.urlencoded({ extended:true }));
 // parse incoming JSON data
 app.use(express.json());
+
+// instructs server to make certain files readily available and not gate behind server endpoint
+app.use(express.static('public'));
 
 // ---------------------------------------- FUNCTIONS ----------------------------------------
 // ability to filter results or what you are looking for
@@ -110,6 +113,21 @@ app.get('/api/animals/:id', (req, res) => {
   } else {
     res.send(404);
   }
+});
+
+// ROUTE used for creating the homepage index.html (main page)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/index.html'));
+});
+
+// ROUTE used for creating the animals page
+app.get('/animals', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/animals.html'));
+});
+
+// ROUTE used for creating the zookeepers page
+app.get('/zookeepers', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/zookeepers.html'));
 });
 
 // ---------------------------------------- POST DATA TO THE SERVER ----------------------------------------
