@@ -1,8 +1,11 @@
 const express = require('express');
 const { animals } = require('./data/animals.json');
-const fs = require('fs'); //used to write data to the animals.json file
-const path = require('path'); //makes our file system a little more predictable and easier to interface with Heroku
+// const fs = require('fs'); //used to write data to the animals.json file
+// const path = require('path'); //makes our file system a little more predictable and easier to interface with Heroku
 const { type } = require('os');
+
+const apiRoutes = require('./routes/apiRoutes');
+const htmlRoutes = require('./routes/htmlRoutes');
 
 // tells heroku where to go
 const PORT = process.env.PORT || 3001;
@@ -16,134 +19,54 @@ app.use(express.urlencoded({ extended:true }));
 // parse incoming JSON data
 app.use(express.json());
 
+// this tells the server that anytime a client navigates to <ourhost>/api, the app will use the router that we set up in apiRoutes
+app.use('/api', apiRoutes);
+app.use('/', htmlRoutes);
+
 // instructs server to make certain files readily available and not gate behind server endpoint
 app.use(express.static('public'));
 
 // ---------------------------------------- FUNCTIONS ----------------------------------------
-// ability to filter results or what you are looking for
-function filterByQuery(query, animalsArray) {
-    let personalityTraitsArray = [];
-  // Note that we save the animalsArray as filteredResults here:
-  let filteredResults = animalsArray;
-  if (query.personalityTraits) {
-    // Save personalityTraits as a dedicated array.
-    // If personalityTraits is a string, place it into a new array and save.
-    if (typeof query.personalityTraits === 'string') {
-      personalityTraitsArray = [query.personalityTraits];
-    } else {
-      personalityTraitsArray = query.personalityTraits;
-    }
-    // Loop through each trait in the personalityTraits array:
-    personalityTraitsArray.forEach(trait => {
-      // Check the trait against each animal in the filteredResults array.
-      // Remember, it is initially a copy of the animalsArray,
-      // but here we're updating it for each trait in the .forEach() loop.
-      // For each trait being targeted by the filter, the filteredResults
-      // array will then contain only the entries that contain the trait,
-      // so at the end we'll have an array of animals that have every one 
-      // of the traits when the .forEach() loop is finished.
-      filteredResults = filteredResults.filter(
-        animal => animal.personalityTraits.indexOf(trait) !== -1
-      );
-    });
-  }
-  if (query.diet) {
-    filteredResults = filteredResults.filter(animal => animal.diet === query.diet);
-  }
-  if (query.species) {
-    filteredResults = filteredResults.filter(animal => animal.species === query.species);
-  }
-  if (query.name) {
-    filteredResults = filteredResults.filter(animal => animal.name === query.name);
-  }
-  // return the filtered results:
-  return filteredResults;
-}
+// // ability to filter results or what you are looking for
+// function filterByQuery(query, animalsArray) {
+// this function was moved to lib/animals.js
 
 // findById that takes the id and array of animals and returns a single animal object
-function findById(id, animalsArray) {
-    const result = animalsArray.filter(animal => animal.id === id)[0];
-    return result;
-}
+// function findById(id, animalsArray) {
+// this function was moved to lib/animals.js
 
 // function to create a new animal
-function createNewAnimal(body, animalsArray) {
-    const animal = body;
-    animalsArray.push(animal);
-    //SYNC does not require a call back function, this is not a large file, so this is acceptable here.  Would normally use regual writeFile
-    fs.writeFileSync(
-        path.join(__dirname, './data/animals.json'),
-        JSON.stringify({ animals: animalsArray }, null, 2) //null means we don't want to edit anything.  2 indicates we want to create white space with our values to make it more readable.  W/o this, would be hard to read
-    );
-    return animal
-}
+//function createNewAnimal(body, animalsArray) {
+// this function was moved to lib/animals.js
 
 // function to validate the new animal data coming in
-function validateAnimal(animal) {
-    if (!animal.name || typeof animal.name !== 'string') {
-        return false;
-    }
-    if (!animal.species || typeof animal.species !== 'string') {
-        return false;
-    }
-    if (!animal.diet || typeof animal.diet !== 'string') {
-        return false;
-    }
-    if (!animal.personalityTraits || !Array.isArray(animal.personalityTraits)) {
-        return false;
-    }
-    return true;
-}
+//function validateAnimal(animal) {
+// this function was moved to lib/animals.js
 
 // ---------------------------------------- GET DATA FROM THE SERVER ----------------------------------------
-// ROUTE add the route to get the information
-app.get('/api/animals', (req, res) => {
-    let results = animals;
-  if (req.query) {
-    results = filterByQuery(req.query, results);
-  }
-  res.json(results);
-});
+// // ROUTE add the route to get the information
+// app.get('/api/animals', (req, res) => {
+// this route moved to routes/apiRoutes/animalRoutes.js
 
-// ROUTE adds id to the route for the animals
-app.get('/api/animals/:id', (req, res) => {
-    const result = findById(req.params.id, animals);
-  if (result) {
-    res.json(result);
-  } else {
-    res.send(404);
-  }
-});
+// // ROUTE adds id to the route for the animals
+// app.get('/api/animals/:id', (req, res) => {
+// this route moved to routes/apiRoutes/animalRoutes.js
 
 // ROUTE used for creating the homepage index.html (main page)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, './public/index.html'));
-});
+//app.get('/', (req, res) => {
+// this route moved to routes/htmlRoutes/index.js
 
 // ROUTE used for creating the animals page
-app.get('/animals', (req, res) => {
-    res.sendFile(path.join(__dirname, './public/animals.html'));
-});
+//app.get('/animals', (req, res) => {
+// this route moved to routes/htmlRoutes/index.js
 
 // ROUTE used for creating the zookeepers page
-app.get('/zookeepers', (req, res) => {
-    res.sendFile(path.join(__dirname, './public/zookeepers.html'));
-});
+//app.get('/zookeepers', (req, res) => {
+// this route moved to routes/htmlRoutes/index.js
 
 // ---------------------------------------- POST DATA TO THE SERVER ----------------------------------------
-app.post('/api/animals', (req, res) => {
-    // set id based on what the next index of the array will be
-    req.body.id = animals.length.toString();
-
-    // if any data in req.body is incorrect, send 400 error back
-    if (!validateAnimal(req.body)) {
-        res.status(400).send('The animal is not properly formatted.');
-    } else {
-        // add animal to json file and animals array in this function
-        const animal = createNewAnimal(req.body, animals);
-        res.json(animal);
-    }    
-});
+// app.post('/api/animals', (req, res) => {
+// this route moved to routes/apiRoutes/animalRoutes.js
 
 // ---------------------------------------- SERVER TO LISTEN ----------------------------------------
 // get the server to listen
